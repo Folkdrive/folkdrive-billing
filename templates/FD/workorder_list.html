@@ -1,0 +1,955 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}Work Orders - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">Work Orders</h1>
+                    <span class="brand-subtitle">Manage your projects and services</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'workorder_create' %}" class="nav-action" title="Create Work Order">
+                <i class="fas fa-plus"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Stunning Stats Header -->
+    <div class="stats-hero" data-aos="fade-up">
+        <div class="stats-grid-three">
+            <!-- Total Work Orders Card -->
+            <div class="stat-card premium" data-aos="fade-up">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Work Orders</div>
+                    <div class="stat-number">{{ total_work_orders_count }}</div>
+                    <div class="stat-trend">
+                        <span class="trend-badge success">
+                            <i class="fas fa-database"></i>
+                            All Projects
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-graph">
+                    <div class="graph-bar" style="height: 70%"></div>
+                    <div class="graph-bar" style="height: 85%"></div>
+                    <div class="graph-bar" style="height: 60%"></div>
+                    <div class="graph-bar" style="height: 90%"></div>
+                    <div class="graph-bar" style="height: 75%"></div>
+                </div>
+            </div>
+
+            <!-- Active Projects Card -->
+            <div class="stat-card premium" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-number">{{ work_orders.count }}</div>
+                    <div class="stat-trend">
+                        <span class="trend-badge info">
+                            <i class="fas fa-chart-line"></i>
+                            In Progress
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-progress">
+                    <div class="progress-ring">
+                        <svg width="80" height="80">
+                            <circle class="progress-ring-bg" cx="40" cy="40" r="36"></circle>
+                            <circle class="progress-ring-fill" cx="40" cy="40" r="36" 
+                                    style="stroke-dashoffset: 113.04;"></circle>
+                        </svg>
+                        <div class="progress-text">50%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Card -->
+            <div class="stat-card premium" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Value</div>
+                    <div class="stat-number">
+                        ₹{% with total=work_orders|length %}{% if total > 0 %}{{ total }}{% else %}0{% endif %}{% endwith %}K
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-badge warning">
+                            <i class="fas fa-rocket"></i>
+                            Project Value
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-sparkline">
+                    <div class="sparkline-line"></div>
+                    <div class="sparkline-dots">
+                        <div class="dot" style="left: 10%"></div>
+                        <div class="dot" style="left: 30%"></div>
+                        <div class="dot" style="left: 50%"></div>
+                        <div class="dot" style="left: 70%"></div>
+                        <div class="dot" style="left: 90%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="content-card" data-aos="fade-up">
+        <div class="card-body-sm">
+            <form method="get" class="search-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="search" class="form-label">
+                            <i class="fas fa-search me-2"></i>Search Work Orders
+                        </label>
+                        <input type="text" name="search" id="search" class="form-control" 
+                               placeholder="Search by work order number, project, or customer..." 
+                               value="{{ request.GET.search }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="status" class="form-label">
+                            <i class="fas fa-filter me-2"></i>Status Filter
+                        </label>
+                        <select name="status" id="status" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-2"></i>Apply Filters
+                            </button>
+                            <a href="{% url 'workorder_list' %}" class="btn btn-outline">
+                                <i class="fas fa-refresh me-2"></i>Reset
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Work Orders Table -->
+    <div class="content-card" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-list-alt me-2"></i>
+                Work Order Directory
+                <span class="badge">{{ current_page_count }} of {{ total_work_orders_count }}</span>
+            </h3>
+            <div class="card-actions">
+                <a href="{% url 'workorder_create' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-2"></i>New Work Order
+                </a>
+            </div>
+        </div>
+        <div class="card-body-sm">
+            {% if work_orders %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Work Order</th>
+                            <th>Customer</th>
+                            <th>Project</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="actions-column">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workorder in work_orders %}
+                        <tr class="table-row" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:50 }}">
+                            <td>
+                                <div class="workorder-info">
+                                    <div class="workorder-number">{{ workorder.work_order_number }}</div>
+                                    <div class="workorder-date text-muted">{{ workorder.created_at|date:"M d, Y" }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="customer-info">
+                                    <div class="customer-name">{{ workorder.customer.company_name }}</div>
+                                    <div class="customer-contact text-muted">{{ workorder.customer.contact_name }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="project-info">
+                                    <div class="project-title">{{ workorder.project_title|truncatewords:4 }}</div>
+                                    {% if workorder.project_description %}
+                                    <div class="project-description text-muted">{{ workorder.project_description|truncatewords:6 }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="amount-info">
+                                    <div class="amount-total">₹{{ workorder.total_cost|floatformat:2 }}</div>
+                                    <div class="amount-breakdown text-muted">
+                                        Base: ₹{{ workorder.base_amount|floatformat:2 }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if workorder.status == 'completed' %}
+                                <span class="status-badge status-success">
+                                    <i class="fas fa-check-circle me-1"></i>Completed
+                                </span>
+                                {% elif workorder.status == 'in_progress' %}
+                                <span class="status-badge status-warning">
+                                    <i class="fas fa-sync-alt me-1"></i>In Progress
+                                </span>
+                                {% elif workorder.status == 'confirmed' %}
+                                <span class="status-badge status-info">
+                                    <i class="fas fa-check me-1"></i>Confirmed
+                                </span>
+                                {% elif workorder.status == 'cancelled' %}
+                                <span class="status-badge status-danger">
+                                    <i class="fas fa-times me-1"></i>Cancelled
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-secondary">
+                                    <i class="fas fa-edit me-1"></i>Draft
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="date-info">
+                                    <div class="created-date">{{ workorder.created_at|date:"M d, Y" }}</div>
+                                    <div class="time-ago text-muted">{{ workorder.created_at|timesince }} ago</div>
+                                </div>
+                            </td>
+                            <td class="actions-column">
+                                <div class="action-buttons">
+                                    <a href="{% url 'workorder_detail' workorder.pk %}" class="btn-action" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'workorder_edit' workorder.pk %}" class="btn-action" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if workorder.status in 'confirmed,completed' and not workorder.invoice %}
+                                    <a href="{% url 'convert_to_invoice' workorder.pk %}" class="btn-action success" title="Convert to Invoice">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'print_workorder' workorder.pk %}" class="btn-action" title="Print" target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Showing {{ work_orders.start_index }} - {{ work_orders.end_index }} of {{ total_work_orders_count }}
+                </div>
+                <div class="pagination-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="pagination-link active">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-invoice"></i>
+                <h3>No Work Orders Found</h3>
+                <p class="text-muted">Create your first work order to get started with project management</p>
+                <a href="{% url 'workorder_create' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Create Work Order
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Include all stunning stats CSS from customer list */
+.stats-hero {
+    margin-bottom: 2rem;
+}
+
+.stats-grid-three {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.stat-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    backdrop-filter: blur(10px);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-blue);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(59, 130, 246, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.stat-card-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.05) 0%, 
+        rgba(139, 92, 246, 0.05) 50%, 
+        rgba(16, 185, 129, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.stat-card:hover .stat-card-bg {
+    opacity: 1;
+}
+
+.stat-icon {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-card:nth-child(1) .stat-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card:nth-child(2) .stat-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
+}
+
+.stat-card:nth-child(3) .stat-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+}
+
+.stat-icon i {
+    font-size: 1.8rem;
+    color: white;
+}
+
+.stat-content {
+    position: relative;
+    flex: 1;
+    z-index: 2;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+}
+
+.trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.trend-badge.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.trend-badge.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.trend-badge.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Enhanced Table Styles */
+.table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.data-table th {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1.25rem 1rem;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    vertical-align: top;
+    background: var(--card-bg);
+    transition: all 0.3s ease;
+}
+
+.table-row {
+    transition: all 0.3s ease;
+}
+
+.table-row:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    transform: translateX(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Work Order Info */
+.workorder-info .workorder-number {
+    font-weight: 700;
+    color: var(--accent-blue);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.workorder-info .workorder-date {
+    font-size: 0.8rem;
+}
+
+/* Customer Info */
+.customer-info .customer-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.customer-info .customer-contact {
+    font-size: 0.8rem;
+}
+
+/* Project Info */
+.project-info .project-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+.project-info .project-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Amount Info */
+.amount-info .amount-total {
+    font-weight: 700;
+    color: var(--accent-green);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.amount-info .amount-breakdown {
+    font-size: 0.75rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.status-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.status-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-red);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.status-secondary {
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--text-secondary);
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* Date Info */
+.date-info .created-date {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.date-info .time-ago {
+    font-size: 0.75rem;
+}
+
+/* Action Buttons */
+.actions-column {
+    white-space: nowrap;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    color: var(--accent-blue);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-action:hover {
+    background: var(--accent-blue);
+    color: white;
+    transform: translateY(-2px) scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-action.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+
+.btn-action.success:hover {
+    background: var(--accent-green);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--card-border);
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.pagination-links {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 42px;
+    padding: 0 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pagination-link:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    transform: translateY(-1px);
+}
+
+.pagination-link.active {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Badge */
+.badge {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    color: white;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+/* Form Styles */
+.search-form {
+    padding: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1.5rem;
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--dark-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.875rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Content Card Styles */
+.content-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.content-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.card-header-sm {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.card-title-sm {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-body-sm {
+    padding: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .stats-grid-three {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-table {
+        font-size: 0.8rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 1rem 0.5rem;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+        min-height: 180px;
+    }
+    
+    .card-header-sm {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+</style>
+
+<!-- SVG Gradients for Progress Rings -->
+<svg class="defs-only">
+    <defs>
+        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f093fb" />
+            <stop offset="100%" stop-color="#f5576c" />
+        </linearGradient>
+    </defs>
+</svg>
+
+<script>
+// Enhanced work order list interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress rings
+    const progressRings = document.querySelectorAll('.progress-ring-fill');
+    progressRings.forEach(ring => {
+        const radius = ring.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        const offset = circumference - (50 / 100) * circumference;
+        ring.style.strokeDasharray = `${circumference} ${circumference}`;
+        ring.style.strokeDashoffset = circumference;
+        
+        setTimeout(() => {
+            ring.style.strokeDashoffset = offset;
+        }, 500);
+    });
+
+    // Table row interactions
+    const tableRows = document.querySelectorAll('.table-row');
+    tableRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (!e.target.closest('.action-buttons')) {
+                const viewLink = this.querySelector('a[title="View Details"]');
+                if (viewLink) {
+                    viewLink.click();
+                }
+            }
+        });
+    });
+
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    console.log('Work order list with stunning design loaded successfully');
+});
+</script>
+{% endblock %}

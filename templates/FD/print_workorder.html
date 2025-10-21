@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Work Order - {{ work_order.work_order_number }} | Folkdrive India</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+            background: #ffffff;
+            line-height: 1.3;
+            font-size: 11px;
+        }
+        
+        /* Compact Header with Logo */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        .company-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1f2937;
+            margin: 0 0 2px 0;
+        }
+        
+        .company-tagline {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .company-details {
+            font-size: 9px;
+            color: #6b7280;
+            line-height: 1.2;
+        }
+        
+        .document-info {
+            text-align: right;
+        }
+        
+        .document-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 0;
+        }
+        
+        .document-number {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+        
+        /* Three Column Layout for Maximum Space Usage */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        /* Compact Cards */
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            min-height: 120px;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #3b82f6;
+            padding-bottom: 2px;
+        }
+        
+        /* Compact Tables */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        
+        .info-table td {
+            padding: 4px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .info-table td:first-child {
+            font-weight: 600;
+            color: #374151;
+            width: 40%;
+        }
+        
+        /* Financial Section */
+        .financial-section {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        
+        .financial-table td {
+            padding: 4px 0;
+            border-bottom: 1px solid #d1fae5;
+        }
+        
+        .financial-table tr:last-child td {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 11px;
+            color: #059669;
+        }
+        
+        .amount {
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        /* Payment Section */
+        .payment-section {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+        
+        .bank-details {
+            font-size: 9px;
+        }
+        
+        .qr-section {
+            text-align: center;
+        }
+        
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 0 auto 5px;
+        }
+        
+        /* Terms Section - Auto Height */
+        .terms-section {
+            background: #e0e7ff;
+            border: 1px solid #a5b4fc;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+            page-break-inside: avoid;
+        }
+        
+        .terms-content {
+            font-size: 9px;
+            line-height: 1.3;
+            color: #374151;
+            max-height: 100px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 9px;
+            color: #6b7280;
+        }
+        
+        /* Print Controls */
+        .no-print {
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+        }
+        
+        .print-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+        }
+        
+        /* Auto page break prevention */
+        .page-break {
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none; }
+            .card, .financial-section, .payment-section, .terms-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Compact Header with Logo -->
+    <div class="header">
+        <div class="company-brand">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="Folkdrive Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;">
+            </div>
+            <div class="company-info">
+                <div class="company-name">Folkdrive India Private Limited</div>
+                <div class="company-tagline">Empowering Sales & Digital Transformation</div>
+                <div class="company-details">
+                    GST: 29AAECF3447K1ZB | Phone: 9916245531<br>
+                    Email: info@folkdrive.in
+                </div>
+            </div>
+        </div>
+        <div class="document-info">
+            <div class="document-title">WORK ORDER</div>
+            <div class="document-number">{{ work_order.work_order_number }}</div>
+            <div class="status-badge">CONFIRMED</div>
+        </div>
+    </div>
+
+    <!-- Three Column Grid for Maximum Space Usage -->
+    <div class="main-grid">
+        <!-- Column 1: Project Details -->
+        <div class="card page-break">
+            <div class="section-title">Project Details</div>
+            <table class="info-table">
+                <tr><td>Work Order No</td><td>{{ work_order.work_order_number }}</td></tr>
+                <tr><td>Project Title</td><td>{{ work_order.project_title }}</td></tr>
+                <tr><td>Created Date</td><td>{{ work_order.created_at|date:"M d, Y" }}</td></tr>
+                <tr><td>Status</td><td>CONFIRMED</td></tr>
+            </table>
+        </div>
+
+        <!-- Column 2: Client Information -->
+        <div class="card page-break">
+            <div class="section-title">Client Information</div>
+            <table class="info-table">
+                <tr><td>Company</td><td>{{ work_order.customer.company_name }}</td></tr>
+                <tr><td>Contact</td><td>{{ work_order.customer.contact_name }}</td></tr>
+                <tr><td>Email</td><td>{{ work_order.customer.email }}</td></tr>
+                <tr><td>Phone</td><td>{{ work_order.customer.mobile_number }}</td></tr>
+                <tr><td>GST Number</td><td>{{ work_order.customer.gst_number }}</td></tr>
+            </table>
+        </div>
+
+        <!-- Column 3: Quick Actions -->
+        <div class="card page-break">
+            <div class="section-title">Payment Summary</div>
+            <table class="info-table">
+                <tr><td>Base Amount</td><td>₹{{ work_order.base_amount }}</td></tr>
+                <tr><td>Discount</td><td>{{ work_order.discount }}%</td></tr>
+                <tr><td>GST</td><td>{{ work_order.gst_percentage }}%</td></tr>
+                <tr><td><strong>Total</strong></td><td><strong>₹{{ work_order.total_cost }}</strong></td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Project Description (Only if exists) -->
+    {% if work_order.project_description %}
+    <div class="card page-break">
+        <div class="section-title">Project Description</div>
+        <div style="font-size: 10px; line-height: 1.3;">
+            {{ work_order.project_description|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Financial Details -->
+    <div class="financial-section page-break">
+        <div class="section-title" style="color: #059669;">Financial Breakdown</div>
+        <table class="financial-table">
+            <tr>
+                <td>Base Amount</td>
+                <td class="amount">₹{{ work_order.base_amount }}</td>
+            </tr>
+            <tr>
+                <td>Discount ({{ work_order.discount }}%)</td>
+                <td class="amount">-₹{{ work_order.discount_amount }}</td>
+            </tr>
+            <tr>
+                <td>Taxable Amount</td>
+                <td class="amount">₹{{ work_order.base_amount|add:work_order.discount_amount }}</td>
+            </tr>
+            <tr>
+                <td>GST ({{ work_order.gst_percentage }}%)</td>
+                <td class="amount">₹{{ work_order.gst_amount }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Amount</strong></td>
+                <td class="amount"><strong>₹{{ work_order.total_cost }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Payment Information - Single Section -->
+    <div class="payment-section page-break">
+        <div class="section-title" style="color: #d97706;">Payment Information</div>
+        <div class="payment-grid">
+            <div class="bank-details">
+                <table class="info-table">
+                    <tr><td>Bank Name</td><td>State Bank of India</td></tr>
+                    <tr><td>Account Number</td><td>42583437839</td></tr>
+                    <tr><td>Account Holder</td><td>Folkdrive India Pvt Ltd</td></tr>
+                    <tr><td>IFSC Code</td><td>SBIN0064074</td></tr>
+                    <tr><td>Branch</td><td>Start Up Branch</td></tr>
+                    <tr><td>UPI ID</td><td>folkdrive@sbi</td></tr>
+                </table>
+            </div>
+            <div class="qr-section">
+                <div class="qr-code">
+                    <img src="/static/images/payment-qr.jpg" alt="Payment QR Code" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                </div>
+                <div style="font-size: 8px; color: #6b7280;">
+                    Scan to Pay
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms & Conditions - Auto Height -->
+    <div class="terms-section page-break">
+    <div class="section-title" style="color: #4f46e5;">Terms & Conditions</div>
+    <div class="terms-content" style="text-align: justify; hyphens: auto;">
+        {% if work_order.terms_and_conditions %}
+            {{ work_order.terms_and_conditions|linebreaks }}
+        {% else %}
+            <p style="color: #6b7280; font-style: italic; text-align: center;">
+                Terms and conditions will be provided separately.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+    <!-- Compact Footer -->
+    <div class="footer">
+        <strong>Folkdrive India Private Limited</strong> | 
+        Empowering Sales | 
+        GST: 29AAECF3447K1ZB | 
+        Phone: 9916245531 | 
+        Email: info@folkdrive.in<br>
+        <em>This is a computer-generated work order. No signature required.</em>
+    </div>
+
+    <!-- Print Controls -->
+    <div class="no-print">
+        <button onclick="window.print()" class="print-btn">
+            🖨️ Print Work Order
+        </button>
+        <button onclick="window.close()" style="background: #6b7280; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-left: 6px; font-weight: 600;">
+            ❌ Close
+        </button>
+    </div>
+</body>
+</html>

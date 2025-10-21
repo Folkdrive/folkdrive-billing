@@ -1,0 +1,54 @@
+{% extends 'FD/base.html' %}
+
+{% block title %}Home - FD Billing{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Welcome to FD Billing System</h1>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <h3>🚀 FD Billing System</h3>
+                <p class="lead">Complete Work Order to Invoice Management Solution</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>📋 Work Orders</h5>
+                                <p>Create and manage work orders with auto-numbering</p>
+                                <a href="{% url 'workorder_list' %}" class="btn btn-outline-primary">Manage Work Orders</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>📄 Invoices</h5>
+                                <p>Convert work orders to professional invoices</p>
+                                <a href="{% url 'invoice_list' %}" class="btn btn-outline-primary">Manage Invoices</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>💰 Payments</h5>
+                                <p>Track payments and manage cash flow</p>
+                                <a href="{% url 'invoice_list' %}" class="btn btn-outline-primary">View Payments</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'workorder_create' %}" class="btn btn-primary btn-lg">Create Your First Work Order</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

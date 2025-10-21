@@ -1,0 +1,986 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Invoice {{ form.instance.invoice_number }}{% else %}Create Invoice{% endif %} - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">{% if form.instance.pk %}Edit Invoice{% else %}Create Invoice{% endif %}</h1>
+                    <span class="brand-subtitle">{% if form.instance.pk %}Update billing details{% else %}Generate new invoice{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'invoice_list' %}" class="nav-action" title="Back to Invoices">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Invoice Form -->
+    <div class="form-container" data-aos="fade-up">
+        <div class="content-card premium-form">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    {% if form.instance.pk %}Edit Invoice {{ form.instance.invoice_number }}{% else %}Create New Invoice{% endif %}
+                </h3>
+                <div class="card-actions">
+                    <a href="{% if form.instance.pk %}{% url 'invoice_detail' form.instance.pk %}{% else %}{% url 'invoice_list' %}{% endif %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body-sm">
+                <form method="post" class="invoice-form">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger" data-aos="fade-up">
+                        <div class="alert-message">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Please correct the errors below
+                        </div>
+                        <ul class="error-list">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Invoice Information Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Invoice Information
+                            </h4>
+                            <div class="section-indicator success">
+                                <i class="fas fa-check-circle"></i>
+                                Required
+                            </div>
+                        </div>
+                        <div class="form-grid-two">
+                            <div class="form-group {% if form.work_order.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.work_order.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-file-invoice me-2"></i>Work Order
+                                </label>
+                                {{ form.work_order }}
+                                {% if form.work_order.errors %}
+                                <div class="error-message">
+                                    {% for error in form.work_order.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-help">
+                                    <i class="fas fa-info-circle me-1"></i>Select the work order to convert to invoice
+                                </div>
+                            </div>
+
+                            <div class="form-group {% if form.customer.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.customer.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-building me-2"></i>Customer
+                                </label>
+                                {{ form.customer }}
+                                {% if form.customer.errors %}
+                                <div class="error-message">
+                                    {% for error in form.customer.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date & Status Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Date & Status
+                            </h4>
+                            <div class="section-indicator info">
+                                <i class="fas fa-clock"></i>
+                                Timeline
+                            </div>
+                        </div>
+                        <div class="form-grid-three">
+                            <div class="form-group {% if form.invoice_date.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.invoice_date.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-calendar me-2"></i>Invoice Date
+                                </label>
+                                {{ form.invoice_date }}
+                                {% if form.invoice_date.errors %}
+                                <div class="error-message">
+                                    {% for error in form.invoice_date.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.due_date.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-hourglass-end me-2"></i>Due Date
+                                </label>
+                                {{ form.due_date }}
+                                {% if form.due_date.errors %}
+                                <div class="error-message">
+                                    {% for error in form.due_date.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.status.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="150">
+                                <label for="{{ form.status.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-status me-2"></i>Status
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="error-message">
+                                    {% for error in form.status.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Summary Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-calculator me-2"></i>
+                                Financial Summary
+                            </h4>
+                            <div class="section-indicator warning">
+                                <i class="fas fa-rupee-sign"></i>
+                                Auto-calculated
+                            </div>
+                        </div>
+                        
+                        <!-- Financial Summary Display -->
+                        <div class="financial-summary" data-aos="fade-up">
+                            <div class="summary-header">
+                                <h5 class="summary-title">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Invoice Summary
+                                </h5>
+                            </div>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <div class="summary-icon primary">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Base Amount</div>
+                                        <div class="summary-value" id="baseAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon info">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">GST Amount</div>
+                                        <div class="summary-value" id="gstAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon success">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Discount</div>
+                                        <div class="summary-value" id="discountAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item total">
+                                    <div class="summary-icon danger">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Total Amount</div>
+                                        <div class="summary-value" id="totalAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GST Breakdown -->
+                        <div class="gst-breakdown" data-aos="fade-up" data-aos-delay="100">
+                            <div class="breakdown-header">
+                                <h5 class="breakdown-title">
+                                    <i class="fas fa-receipt me-2"></i>
+                                    GST Breakdown
+                                </h5>
+                            </div>
+                            <div class="breakdown-grid">
+                                <div class="breakdown-item">
+                                    <div class="breakdown-label">CGST (9%)</div>
+                                    <div class="breakdown-value" id="cgstAmountDisplay">₹0.00</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="breakdown-label">SGST (9%)</div>
+                                    <div class="breakdown-value" id="sgstAmountDisplay">₹0.00</div>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="breakdown-label">IGST (18%)</div>
+                                    <div class="breakdown-value" id="igstAmountDisplay">₹0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms & Conditions Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-file-contract me-2"></i>
+                                Terms & Conditions
+                            </h4>
+                            <div class="section-indicator secondary">
+                                <i class="fas fa-edit"></i>
+                                Optional
+                            </div>
+                        </div>
+                        <div class="form-group {% if form.terms_and_conditions.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                            <label for="{{ form.terms_and_conditions.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>Terms & Conditions
+                            </label>
+                            {{ form.terms_and_conditions }}
+                            {% if form.terms_and_conditions.errors %}
+                            <div class="error-message">
+                                {% for error in form.terms_and_conditions.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle me-1"></i>Define payment terms, conditions, and other important information for the customer.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                Additional Notes
+                            </h4>
+                            <div class="section-indicator secondary">
+                                <i class="fas fa-pen"></i>
+                                Optional
+                            </div>
+                        </div>
+                        <div class="form-group {% if form.notes.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment-alt me-2"></i>Notes
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="error-message">
+                                {% for error in form.notes.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle me-1"></i>Add any additional notes or special instructions for this invoice.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions" data-aos="fade-up">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            {% if form.instance.pk %}Update Invoice{% else %}Create Invoice{% endif %}
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'invoice_detail' form.instance.pk %}{% else %}{% url 'invoice_list' %}{% endif %}" class="btn btn-outline btn-lg">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        {% if not form.instance.pk %}
+                        <button type="button" class="btn btn-success btn-lg" id="previewInvoice">
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Premium Form Styles */
+.form-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.premium-form {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.premium-form:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.invoice-form {
+    padding: 0.5rem;
+}
+
+.form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--card-border);
+    position: relative;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.section-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.section-indicator.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.section-indicator.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.section-indicator.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.section-indicator.secondary {
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--text-secondary);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.form-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.form-grid-three {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: var(--accent-red);
+    margin-left: 0.25rem;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--dark-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 
+        0 0 0 3px rgba(59, 130, 246, 0.1),
+        0 4px 20px rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.form-control.has-error {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 3rem;
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-style: italic;
+}
+
+.error-message {
+    color: var(--accent-red);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--accent-red);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--accent-red);
+}
+
+.alert-message {
+    color: var(--accent-red);
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.error-list {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--accent-red);
+    font-size: 0.9rem;
+}
+
+.error-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Financial Summary */
+.financial-summary {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.summary-header {
+    margin-bottom: 1.5rem;
+}
+
+.summary-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+.summary-item.total {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-color: var(--accent-blue);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.summary-icon.primary {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.summary-icon.info {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(79, 172, 254, 0.1) 100%);
+    color: var(--accent-info);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+}
+
+.summary-icon.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.summary-icon.danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.summary-item.total .summary-value {
+    color: var(--accent-blue);
+    font-size: 1.5rem;
+}
+
+/* GST Breakdown */
+.gst-breakdown {
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.breakdown-header {
+    margin-bottom: 1rem;
+}
+
+.breakdown-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+}
+
+.breakdown-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.breakdown-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--card-border);
+}
+
+.btn-lg {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-teal) 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--card-border);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid-two,
+    .form-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .summary-grid,
+    .breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-lg {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .financial-summary,
+    .gst-breakdown {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Enhanced invoice calculations with animations
+document.addEventListener('DOMContentLoaded', function() {
+    const workOrderSelect = document.getElementById('{{ form.work_order.id_for_label }}');
+    const customerSelect = document.getElementById('{{ form.customer.id_for_label }}');
+    const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+    
+    const baseAmountDisplay = document.getElementById('baseAmountDisplay');
+    const gstAmountDisplay = document.getElementById('gstAmountDisplay');
+    const discountAmountDisplay = document.getElementById('discountAmountDisplay');
+    const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+    const cgstAmountDisplay = document.getElementById('cgstAmountDisplay');
+    const sgstAmountDisplay = document.getElementById('sgstAmountDisplay');
+    const igstAmountDisplay = document.getElementById('igstAmountDisplay');
+
+    // Work order data cache
+    const workOrderData = {};
+
+    function calculateInvoice() {
+        const selectedWorkOrder = workOrderSelect?.value;
+        const workOrder = workOrderData[selectedWorkOrder];
+        
+        if (!workOrder) {
+            resetFinancials();
+            return;
+        }
+
+        const baseAmount = workOrder.base_amount || 0;
+        const gstPercentage = workOrder.gst_percentage || 0;
+        const discount = workOrder.discount || 0;
+
+        // Calculate discount amount
+        const discountAmount = (baseAmount * discount) / 100;
+        
+        // Calculate taxable amount after discount
+        const taxableAmount = baseAmount - discountAmount;
+        
+        // Calculate GST amount
+        const gstAmount = (taxableAmount * gstPercentage) / 100;
+        
+        // Calculate total amount
+        const totalAmount = taxableAmount + gstAmount;
+
+        // Calculate GST breakdown (assuming 18% GST split as 9% CGST + 9% SGST)
+        const cgstAmount = gstAmount / 2;
+        const sgstAmount = gstAmount / 2;
+        const igstAmount = gstAmount; // For interstate transactions
+
+        // Animate number updates
+        animateNumber(baseAmountDisplay, baseAmount);
+        animateNumber(gstAmountDisplay, gstAmount);
+        animateNumber(discountAmountDisplay, discountAmount);
+        animateNumber(totalAmountDisplay, totalAmount);
+        animateNumber(cgstAmountDisplay, cgstAmount);
+        animateNumber(sgstAmountDisplay, sgstAmount);
+        animateNumber(igstAmountDisplay, igstAmount);
+    }
+
+    function resetFinancials() {
+        animateNumber(baseAmountDisplay, 0);
+        animateNumber(gstAmountDisplay, 0);
+        animateNumber(discountAmountDisplay, 0);
+        animateNumber(totalAmountDisplay, 0);
+        animateNumber(cgstAmountDisplay, 0);
+        animateNumber(sgstAmountDisplay, 0);
+        animateNumber(igstAmountDisplay, 0);
+    }
+
+    function animateNumber(element, value) {
+        if (!element) return;
+        
+        const start = parseFloat(element.textContent.replace('₹', '')) || 0;
+        const duration = 500;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentValue = start + (value - start) * easeOut;
+            
+            element.textContent = '₹' + currentValue.toFixed(2);
+            
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        
+        requestAnimationFrame(update);
+    }
+
+    // Load work order data when selected
+    if (workOrderSelect) {
+        workOrderSelect.addEventListener('change', function() {
+            const workOrderId = this.value;
+            
+            if (workOrderId && !workOrderData[workOrderId]) {
+                // Simulate API call to fetch work order data
+                // In a real implementation, this would be an AJAX call to your backend
+                console.log('Fetching work order data for:', workOrderId);
+                
+                // Mock data - replace with actual API call
+                setTimeout(() => {
+                    workOrderData[workOrderId] = {
+                        base_amount: Math.random() * 10000 + 1000,
+                        gst_percentage: 18,
+                        discount: Math.random() * 20
+                    };
+                    calculateInvoice();
+                }, 300);
+            } else {
+                calculateInvoice();
+            }
+        });
+    }
+
+    // Enhanced form interactions
+    const form = document.querySelector('.invoice-form');
+    const formControls = form.querySelectorAll('.form-control');
+    
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+
+    // Preview invoice functionality
+    const previewButton = document.getElementById('previewInvoice');
+    if (previewButton) {
+        previewButton.addEventListener('click', function() {
+            // Validate form before preview
+            if (form.checkValidity()) {
+                // Show preview modal or redirect to preview page
+                alert('Invoice preview functionality would open here!');
+                // In implementation: window.open('{% url "invoice_preview" %}?data=' + formData, '_blank');
+            } else {
+                form.reportValidity();
+            }
+        });
+    }
+
+    // Auto-focus first field
+    const firstField = form.querySelector('input, select, textarea');
+    if (firstField) {
+        setTimeout(() => {
+            firstField.focus();
+        }, 300);
+    }
+
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    const dueDateString = dueDate.toISOString().split('T')[0];
+
+    const invoiceDateField = document.getElementById('{{ form.invoice_date.id_for_label }}');
+    const dueDateField = document.getElementById('{{ form.due_date.id_for_label }}');
+
+    if (invoiceDateField && !invoiceDateField.value) {
+        invoiceDateField.value = today;
+    }
+    if (dueDateField && !dueDateField.value) {
+        dueDateField.value = dueDateString;
+    }
+
+    console.log('Invoice form with stunning design loaded successfully');
+});
+</script>
+{% endblock %}

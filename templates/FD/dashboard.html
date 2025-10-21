@@ -1,0 +1,978 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Single Navigation Bar -->
+<div class="top-nav">
+    <div class="container-fluid">
+        <div class="nav-content">
+            <div class="nav-brand">
+                <div class="logo-container">
+                    <div class="logo-wrapper">
+                        <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="logo-fallback">
+                            <span>FD</span>
+                        </div>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">Folkdrive Application</h1>
+                        <span class="brand-subtitle">Dashboard - FY: {{ financial_year }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="quick-actions-nav">
+                <!-- Home Button -->
+                <a href="{% url 'dashboard' %}" class="nav-action" title="Home">
+                    <i class="fas fa-home"></i>
+                    <span class="action-tooltip">Home</span>
+                </a>
+                
+                <!-- Quick Action Buttons -->
+                <a href="{% url 'customer_create' %}" class="nav-action" title="Customer">
+                    <i class="fas fa-user-plus"></i>
+                    <span class="action-tooltip">Customer</span>
+                </a>
+                <a href="{% url 'workorder_create' %}" class="nav-action" title="Workorder">
+                    <i class="fas fa-file-invoice"></i>
+                    <span class="action-tooltip">Workorder</span>
+                </a>
+                <a href="{% url 'invoice_list' %}" class="nav-action" title="Invoice">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span class="action-tooltip">Invoice</span>
+                </a>
+                <a href="{% url 'send_reminders' %}" class="nav-action" title="Mail">
+                    <i class="fas fa-envelope"></i>
+                    <span class="action-tooltip">Mail</span>
+                </a>
+                <a href="{% url 'ai_dashboard' %}" class="nav-action" title="AI">
+                    <i class="fas fa-robot"></i>
+                    <span class="action-tooltip">AI</span>
+                </a>
+                <a href="{% url 'legacy_data' %}" class="nav-action" title="Legacy">
+                    <i class="fas fa-database"></i>
+                    <span class="action-tooltip">Legacy</span>
+                </a>
+                
+                <!-- Admin User Info -->
+                <div class="nav-user">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user.username|default:"Admin" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rest of the dashboard content remains exactly the same -->
+<div class="container-fluid main-content">
+    <!-- Customers Stats -->
+    <div class="stats-section" data-aos="fade-up">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-users me-2"></i>
+                Customers Overview
+            </h3>
+        </div>
+        <div class="stats-grid-three">
+            <div class="stat-square">
+                <div class="stat-label">Total Customers</div>
+                <div class="stat-number">{{ new_customers_count|add:migrated_customers_count }}</div>
+                <div class="stat-breakdown">
+                    <span class="stat-new">{{ new_customers_count }} new</span>
+                    <span class="stat-migrated">{{ migrated_customers_count }} migrated</span>
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">New Customers</div>
+                <div class="stat-number">{{ new_customers_count }}</div>
+                <div class="stat-trend success">
+                    <i class="fas fa-arrow-up"></i>
+                    Current System
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">Migrated Customers</div>
+                <div class="stat-number">{{ migrated_customers_count }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-database"></i>
+                    Legacy Data
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Orders Stats -->
+    <div class="stats-section" data-aos="fade-up" data-aos-delay="50">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-file-invoice me-2"></i>
+                Work Orders Overview
+            </h3>
+        </div>
+        <div class="stats-grid-three">
+            <div class="stat-square">
+                <div class="stat-label">Total Work Orders</div>
+                <div class="stat-number">{{ new_work_orders_count|add:migrated_work_orders_count }}</div>
+                <div class="stat-breakdown">
+                    <span class="stat-new">{{ new_work_orders_count }} new</span>
+                    <span class="stat-migrated">{{ migrated_work_orders_count }} migrated</span>
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">New Work Orders</div>
+                <div class="stat-number">{{ new_work_orders_count }}</div>
+                <div class="stat-trend success">
+                    <i class="fas fa-arrow-up"></i>
+                    Current System
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">Migrated Work Orders</div>
+                <div class="stat-number">{{ migrated_work_orders_count }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-database"></i>
+                    Legacy Data
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoices Stats -->
+    <div class="stats-section" data-aos="fade-up" data-aos-delay="100">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-receipt me-2"></i>
+                Invoices Overview
+            </h3>
+        </div>
+        <div class="stats-grid-three">
+            <div class="stat-square">
+                <div class="stat-label">Total Invoices</div>
+                <div class="stat-number">{{ new_invoices_count|add:migrated_invoices_count }}</div>
+                <div class="stat-breakdown">
+                    <span class="stat-new">{{ new_invoices_count }} new</span>
+                    <span class="stat-migrated">{{ migrated_invoices_count }} migrated</span>
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">New Invoices</div>
+                <div class="stat-number">{{ new_invoices_count }}</div>
+                <div class="stat-trend success">
+                    <i class="fas fa-arrow-up"></i>
+                    Current System
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">Migrated Invoices</div>
+                <div class="stat-number">{{ migrated_invoices_count }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-database"></i>
+                    Legacy Data
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Stats -->
+    <div class="stats-section" data-aos="fade-up" data-aos-delay="150">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-indian-rupee-sign me-2"></i>
+                Revenue Overview
+            </h3>
+            <div class="section-tabs">
+                <button class="tab-btn active" data-tab="new-revenue">New System</button>
+                <button class="tab-btn" data-tab="migrated-revenue">Legacy Data</button>
+            </div>
+        </div>
+        
+        <div class="tab-content active" id="new-revenue">
+            <div class="stats-grid-three">
+                <div class="stat-square revenue-card" data-collected="{{ new_collected_revenue }}" data-total="{{ new_total_revenue }}">
+                    <div class="stat-label">Collected Revenue</div>
+                    <div class="stat-number success">₹{{ new_collected_revenue }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill success"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-square revenue-card" data-collected="{{ new_pending_payments }}" data-total="{{ new_total_revenue }}">
+                    <div class="stat-label">Pending Payments</div>
+                    <div class="stat-number warning">₹{{ new_pending_payments }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill warning"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-square">
+                    <div class="stat-label">Collection Rate</div>
+                    <div class="stat-number success">{{ new_collection_rate|floatformat:1 }}%</div>
+                    <div class="stat-trend success">
+                        <i class="fas fa-chart-line"></i>
+                        Efficiency
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="migrated-revenue">
+            <div class="stats-grid-three">
+                <div class="stat-square revenue-card" data-collected="{{ migrated_collected_revenue }}" data-total="{{ migrated_total_revenue }}">
+                    <div class="stat-label">Collected Revenue</div>
+                    <div class="stat-number success">₹{{ migrated_collected_revenue }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill success"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-square revenue-card" data-collected="{{ migrated_pending_payments }}" data-total="{{ migrated_total_revenue }}">
+                    <div class="stat-label">Pending Payments</div>
+                    <div class="stat-number warning">₹{{ migrated_pending_payments }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill warning"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-square">
+                    <div class="stat-label">Collection Rate</div>
+                    <div class="stat-number success">{{ migrated_collection_rate|floatformat:1 }}%</div>
+                    <div class="stat-trend success">
+                        <i class="fas fa-chart-line"></i>
+                        Efficiency
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Section -->
+<div class="container-fluid mt-4">
+    <div class="row g-3">
+        <div class="col-lg-12">
+            <div class="content-card" data-aos="fade-up">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Activity
+                    </h3>
+                    <a href="{% url 'invoice_list' %}" class="view-link">View All</a>
+                </div>
+                <div class="card-body-sm">
+                    <div class="activity-list">
+                        {% for invoice in recent_invoices|slice:":8" %}
+                        <div class="activity-item">
+                            <div class="activity-content">
+                                <div class="activity-title">{{ invoice.invoice_number }}</div>
+                                <div class="activity-subtitle">{{ invoice.customer.company_name }}</div>
+                            </div>
+                            <div class="activity-amount {% if invoice.status == 'paid' %}success{% else %}warning{% endif %}">
+                                ₹{{ invoice.total_amount }}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <p>No recent activity</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card alert" data-aos="fade-up">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Overdue Invoices
+                    </h3>
+                    {% if overdue_invoices %}
+                    <a href="{% url 'send_reminders' %}" class="view-link">Send Reminders</a>
+                    {% endif %}
+                </div>
+                <div class="card-body-sm">
+                    <div class="activity-list">
+                        {% for invoice in overdue_invoices|slice:":8" %}
+                        <div class="activity-item overdue">
+                            <div class="activity-content">
+                                <div class="activity-title">{{ invoice.invoice_number }}</div>
+                                <div class="activity-subtitle">{{ invoice.customer.company_name }}</div>
+                            </div>
+                            <div class="activity-amount danger">
+                                ₹{{ invoice.balance_due }}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state success">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No overdue invoices</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AOS Animation Library -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --dark-bg: #0f172a;
+    --card-bg: #1e293b;
+    --card-border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-orange: #f59e0b;
+}
+
+/* Base Styles */
+body {
+    background: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Top Navigation with Quick Actions */
+.top-nav {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 1px solid var(--card-border);
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+    padding: 0 1rem;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-wrapper {
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+
+.company-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    background: white;
+    padding: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brand-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.quick-actions-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--accent-blue);
+    border-radius: 10px;
+    color: var(--accent-blue);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.nav-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--accent-blue);
+    transition: left 0.3s ease;
+    z-index: -1;
+}
+
+.nav-action:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.nav-action:hover::before {
+    left: 0;
+}
+
+.nav-action:hover .action-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.action-tooltip {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 1001;
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 1rem;
+}
+
+/* Main Content */
+.main-content {
+    margin-top: 1rem;
+    padding: 0 1rem;
+}
+
+/* Stats Sections */
+.stats-section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.section-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+}
+
+/* 3-Square Grid Layout */
+.stats-grid-three {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.stat-square {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-square:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.stat-number.success {
+    color: var(--accent-green);
+}
+
+.stat-number.warning {
+    color: var(--accent-orange);
+}
+
+.stat-breakdown {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+}
+
+.stat-new {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+.stat-migrated {
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(100, 116, 139, 0.2);
+}
+
+.stat-trend.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.stat-trend.info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+/* Progress Bars */
+.progress-container {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--card-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.progress-fill.success {
+    background: var(--accent-green);
+}
+
+.progress-fill.warning {
+    background: var(--accent-orange);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Content Cards */
+.content-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+}
+
+.content-card.alert {
+    border-color: var(--accent-red);
+}
+
+.card-header-sm {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.card-title-sm {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-body-sm {
+    padding: 1.25rem;
+}
+
+.view-link {
+    font-size: 0.8rem;
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.view-link:hover {
+    color: var(--text-primary);
+}
+
+/* Activity Lists */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    border-color: var(--accent-blue);
+    transform: translateX(5px);
+}
+
+.activity-item.overdue {
+    border-color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.activity-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.2;
+    margin-top: 0.2rem;
+}
+
+.activity-amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.activity-amount.success {
+    color: var(--accent-green);
+}
+
+.activity-amount.warning {
+    color: var(--accent-orange);
+}
+
+.activity-amount.danger {
+    color: var(--accent-red);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    color: var(--text-secondary);
+}
+
+.empty-state.success {
+    color: var(--accent-green);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Container Fluid */
+.container-fluid {
+    width: 100%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* Utility Classes */
+.me-2 {
+    margin-right: 0.5rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -0.75rem;
+    margin-left: -0.75rem;
+}
+
+.col-lg-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+}
+
+.g-3 {
+    gap: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .section-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .nav-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-actions-nav {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .nav-user {
+        margin-left: 0;
+    }
+    
+    .logo-container {
+        gap: 0.5rem;
+    }
+    
+    .brand-title {
+        font-size: 1.2rem;
+    }
+    
+    .logo-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+}
+</style>
+
+<script>
+// Initialize AOS animations
+document.addEventListener('DOMContentLoaded', function() {
+    AOS.init({
+        duration: 400,
+        once: true,
+        offset: 10
+    });
+
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+
+    // Quick Actions functionality
+    const navActions = document.querySelectorAll('.nav-action');
+    
+    navActions.forEach(action => {
+        action.addEventListener('click', function() {
+            const actionType = this.getAttribute('data-action');
+            
+            // Add click animation
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+
+    // Calculate and set progress bar widths
+    function calculateProgressBars() {
+        const revenueCards = document.querySelectorAll('.revenue-card');
+        
+        revenueCards.forEach(card => {
+            const collected = parseFloat(card.getAttribute('data-collected')) || 0;
+            const total = parseFloat(card.getAttribute('data-total')) || 0;
+            const progressFill = card.querySelector('.progress-fill');
+            
+            if (total > 0 && progressFill) {
+                const percentage = (collected / total) * 100;
+                progressFill.style.width = percentage + '%';
+            }
+        });
+    }
+
+    // Initialize progress bars
+    calculateProgressBars();
+
+    console.log('Dashboard with enhanced navigation loaded successfully');
+});
+</script>
+{% endblock %}

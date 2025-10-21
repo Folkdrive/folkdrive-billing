@@ -1,0 +1,777 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Work Order - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">{% if form.instance.pk %}Edit Work Order{% else %}Create Work Order{% endif %}</h1>
+                    <span class="brand-subtitle">{% if form.instance.pk %}Update project details{% else %}Start a new project{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'workorder_list' %}" class="nav-action" title="Back to Work Orders">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Work Order Form -->
+    <div class="form-container" data-aos="fade-up">
+        <div class="content-card premium-form">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    {% if form.instance.pk %}Edit Work Order {{ form.instance.work_order_number }}{% else %}Create New Work Order{% endif %}
+                </h3>
+                <div class="card-actions">
+                    <a href="{% if form.instance.pk %}{% url 'workorder_detail' form.instance.pk %}{% else %}{% url 'workorder_list' %}{% endif %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body-sm">
+                <form method="post" class="workorder-form">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger" data-aos="fade-up">
+                        <div class="alert-message">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Please correct the errors below
+                        </div>
+                        <ul class="error-list">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Basic Information Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Basic Information
+                            </h4>
+                            <div class="section-indicator success">
+                                <i class="fas fa-check-circle"></i>
+                                Required
+                            </div>
+                        </div>
+                        <div class="form-grid-two">
+                            <div class="form-group {% if form.customer.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.customer.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-building me-2"></i>Customer
+                                </label>
+                                {{ form.customer }}
+                                {% if form.customer.errors %}
+                                <div class="error-message">
+                                    {% for error in form.customer.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.project_title.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.project_title.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-tasks me-2"></i>Project Title
+                                </label>
+                                {{ form.project_title }}
+                                {% if form.project_title.errors %}
+                                <div class="error-message">
+                                    {% for error in form.project_title.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group {% if form.project_description.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="150">
+                            <label for="{{ form.project_description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>Project Description
+                            </label>
+                            {{ form.project_description }}
+                            {% if form.project_description.errors %}
+                            <div class="error-message">
+                                {% for error in form.project_description.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle me-1"></i>Describe the project scope, deliverables, and any specific requirements.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Details Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-calculator me-2"></i>
+                                Financial Details
+                            </h4>
+                            <div class="section-indicator info">
+                                <i class="fas fa-rupee-sign"></i>
+                                Auto-calculated
+                            </div>
+                        </div>
+                        <div class="form-grid-three">
+                            <div class="form-group {% if form.base_amount.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.base_amount.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-money-bill-wave me-2"></i>Base Amount (₹)
+                                </label>
+                                {{ form.base_amount }}
+                                {% if form.base_amount.errors %}
+                                <div class="error-message">
+                                    {% for error in form.base_amount.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.gst_percentage.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.gst_percentage.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-percentage me-2"></i>GST (%)
+                                </label>
+                                {{ form.gst_percentage }}
+                                {% if form.gst_percentage.errors %}
+                                <div class="error-message">
+                                    {% for error in form.gst_percentage.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.discount.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="150">
+                                <label for="{{ form.discount.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-2"></i>Discount (%)
+                                </label>
+                                {{ form.discount }}
+                                {% if form.discount.errors %}
+                                <div class="error-message">
+                                    {% for error in form.discount.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary -->
+                        <div class="financial-summary" data-aos="fade-up">
+                            <div class="summary-header">
+                                <h5 class="summary-title">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Financial Summary
+                                </h5>
+                            </div>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <div class="summary-icon primary">
+                                        <i class="fas fa-money-bill"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Base Amount</div>
+                                        <div class="summary-value" id="baseAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon warning">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">GST Amount</div>
+                                        <div class="summary-value" id="gstAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon success">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Discount</div>
+                                        <div class="summary-value" id="discountAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item total">
+                                    <div class="summary-icon danger">
+                                        <i class="fas fa-calculator"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Total Amount</div>
+                                        <div class="summary-value" id="totalAmountDisplay">₹0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Order Settings Section -->
+                    {% if form.instance.pk %}
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-cog me-2"></i>
+                                Work Order Settings
+                            </h4>
+                            <div class="section-indicator warning">
+                                <i class="fas fa-sliders-h"></i>
+                                Configuration
+                            </div>
+                        </div>
+                        <div class="form-group {% if form.status.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                            <label for="{{ form.status.id_for_label }}" class="form-label required">
+                                <i class="fas fa-status me-2"></i>Status
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="error-message">
+                                {% for error in form.status.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Form Actions -->
+                    <div class="form-actions" data-aos="fade-up">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            {% if form.instance.pk %}Update Work Order{% else %}Create Work Order{% endif %}
+                        </button>
+                        <a href="{% if form.instance.pk %}{% url 'workorder_detail' form.instance.pk %}{% else %}{% url 'workorder_list' %}{% endif %}" class="btn btn-outline btn-lg">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Premium Form Styles */
+.form-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.premium-form {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.premium-form:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.workorder-form {
+    padding: 0.5rem;
+}
+
+.form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--card-border);
+    position: relative;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.section-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.section-indicator.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.section-indicator.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.section-indicator.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.form-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.form-grid-three {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: var(--accent-red);
+    margin-left: 0.25rem;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--dark-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 
+        0 0 0 3px rgba(59, 130, 246, 0.1),
+        0 4px 20px rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.form-control.has-error {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 3rem;
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-style: italic;
+}
+
+.error-message {
+    color: var(--accent-red);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--accent-red);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--accent-red);
+}
+
+.alert-message {
+    color: var(--accent-red);
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.error-list {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--accent-red);
+    font-size: 0.9rem;
+}
+
+.error-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Financial Summary */
+.financial-summary {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.summary-header {
+    margin-bottom: 1.5rem;
+}
+
+.summary-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+.summary-item.total {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-color: var(--accent-blue);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.summary-icon.primary {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.summary-icon.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.summary-icon.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.summary-icon.danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.summary-item.total .summary-value {
+    color: var(--accent-blue);
+    font-size: 1.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--card-border);
+}
+
+.btn-lg {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--card-border);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid-two,
+    .form-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-lg {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .financial-summary {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Enhanced financial calculations with animations
+document.addEventListener('DOMContentLoaded', function() {
+    const baseAmountInput = document.getElementById('{{ form.base_amount.id_for_label }}');
+    const gstPercentageInput = document.getElementById('{{ form.gst_percentage.id_for_label }}');
+    const discountInput = document.getElementById('{{ form.discount.id_for_label }}');
+    
+    const baseAmountDisplay = document.getElementById('baseAmountDisplay');
+    const gstAmountDisplay = document.getElementById('gstAmountDisplay');
+    const discountAmountDisplay = document.getElementById('discountAmountDisplay');
+    const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+
+    function calculateFinancials() {
+        const baseAmount = parseFloat(baseAmountInput?.value) || 0;
+        const gstPercentage = parseFloat(gstPercentageInput?.value) || 0;
+        const discount = parseFloat(discountInput?.value) || 0;
+
+        // Calculate discount amount
+        const discountAmount = (baseAmount * discount) / 100;
+        
+        // Calculate taxable amount after discount
+        const taxableAmount = baseAmount - discountAmount;
+        
+        // Calculate GST amount
+        const gstAmount = (taxableAmount * gstPercentage) / 100;
+        
+        // Calculate total amount
+        const totalAmount = taxableAmount + gstAmount;
+
+        // Animate number updates
+        animateNumber(baseAmountDisplay, baseAmount);
+        animateNumber(gstAmountDisplay, gstAmount);
+        animateNumber(discountAmountDisplay, discountAmount);
+        animateNumber(totalAmountDisplay, totalAmount);
+    }
+
+    function animateNumber(element, value) {
+        if (!element) return;
+        
+        const start = parseFloat(element.textContent.replace('₹', '')) || 0;
+        const duration = 500;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentValue = start + (value - start) * easeOut;
+            
+            element.textContent = '₹' + currentValue.toFixed(2);
+            
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        
+        requestAnimationFrame(update);
+    }
+
+    // Add event listeners for real-time calculation
+    if (baseAmountInput) baseAmountInput.addEventListener('input', calculateFinancials);
+    if (gstPercentageInput) gstPercentageInput.addEventListener('input', calculateFinancials);
+    if (discountInput) discountInput.addEventListener('input', calculateFinancials);
+
+    // Initial calculation
+    calculateFinancials();
+
+    // Enhanced form interactions
+    const form = document.querySelector('.workorder-form');
+    const formControls = form.querySelectorAll('.form-control');
+    
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+
+    // Auto-focus first field
+    const firstField = form.querySelector('input, select, textarea');
+    if (firstField) {
+        setTimeout(() => {
+            firstField.focus();
+        }, 300);
+    }
+
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    console.log('Work order form with stunning design loaded successfully');
+});
+</script>
+{% endblock %}

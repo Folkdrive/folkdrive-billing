@@ -1,0 +1,31 @@
+# .gitignore
+# Django
+*.pyc
+*__pycache__/
+db.sqlite3
+migrations/00*.py
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Static files (if collected)
+staticfiles/
+media/
+
+# Logs
+*.log
+
+# Temporary files
+temp/
+tmp/

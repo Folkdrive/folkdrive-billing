@@ -1,0 +1,824 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}AI Analytics - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">AI Analytics</h1>
+                    <span class="brand-subtitle">Data-driven business insights</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'invoice_list' %}" class="nav-action" title="Invoices">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- AI Insights Header -->
+    <div class="stats-section" data-aos="fade-up">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-robot me-2"></i>
+                AI-Powered Business Insights
+            </h3>
+            <div class="section-tabs">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="predictions">Predictions</button>
+                <button class="tab-btn" data-tab="trends">Trends</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="overview">
+        <!-- Key Metrics - FIXED ALIGNMENT -->
+        <div class="stats-grid-three">
+            <div class="stat-square" data-aos="fade-up">
+                <div class="stat-label">Current Financial Year</div>
+                <div class="stat-number">{{ financial_year }}</div>
+                <div class="stat-trend success">
+                    <i class="fas fa-calendar"></i>
+                    Active Period
+                </div>
+            </div>
+            <div class="stat-square" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-number">₹{{ total_revenue|floatformat:2 }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-rupee-sign"></i>
+                    Generated
+                </div>
+            </div>
+            <div class="stat-square" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-label">Active Customers</div>
+                <div class="stat-number">{{ total_customers }}</div>
+                <div class="stat-trend warning">
+                    <i class="fas fa-users"></i>
+                    Client Base
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Analysis -->
+        <div class="content-card mt-4" data-aos="fade-up">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Payment Status Analysis
+                </h3>
+            </div>
+            <div class="card-body-sm">
+                <div class="analysis-grid">
+                    <div class="analysis-item success">
+                        <div class="analysis-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="analysis-content">
+                            <div class="analysis-value">{{ paid_invoices_count }}</div>
+                            <div class="analysis-label">Paid Invoices</div>
+                            <div class="analysis-amount">₹{{ paid_amount|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="analysis-item warning">
+                        <div class="analysis-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="analysis-content">
+                            <div class="analysis-value">{{ pending_invoices_count }}</div>
+                            <div class="analysis-label">Pending Invoices</div>
+                            <div class="analysis-amount">₹{{ pending_amount|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="analysis-item danger">
+                        <div class="analysis-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="analysis-content">
+                            <div class="analysis-value">{{ overdue_invoices_count }}</div>
+                            <div class="analysis-label">Overdue Invoices</div>
+                            <div class="analysis-amount">₹{{ overdue_amount|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="content-card mt-4" data-aos="fade-up">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Performance Metrics
+                </h3>
+            </div>
+            <div class="card-body-sm">
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-icon primary">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">{{ total_invoices }}</div>
+                            <div class="metric-label">Total Invoices</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon success">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">{{ collection_rate|floatformat:1 }}%</div>
+                            <div class="metric-label">Collection Rate</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon warning">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">{{ avg_payment_days|floatformat:1 }}</div>
+                            <div class="metric-label">Avg Payment Days</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon info">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">{{ total_work_orders }}</div>
+                            <div class="metric-label">Work Orders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions Tab -->
+    <div class="tab-content" id="predictions">
+        <!-- Revenue Predictions -->
+        <div class="stats-grid-three">
+            <div class="stat-square" data-aos="fade-up">
+                <div class="stat-label">Next Month Revenue</div>
+                <div class="stat-number">₹{{ next_month_revenue|floatformat:2 }}</div>
+                <div class="stat-trend {% if revenue_trend == 'up' %}success{% else %}warning{% endif %}">
+                    <i class="fas fa-{% if revenue_trend == 'up' %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                    {{ revenue_change|floatformat:1 }}%
+                </div>
+            </div>
+            <div class="stat-square" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-label">Expected Invoices</div>
+                <div class="stat-number">{{ expected_invoices }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-chart-line"></i>
+                    Next 30 Days
+                </div>
+            </div>
+            <div class="stat-square" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-label">Cash Flow Health</div>
+                <div class="stat-number {% if cash_flow_health == 'good' %}success{% elif cash_flow_health == 'warning' %}warning{% else %}danger{% endif %}">
+                    {{ cash_flow_score }}%
+                </div>
+                <div class="stat-trend {% if cash_flow_health == 'good' %}success{% elif cash_flow_health == 'warning' %}warning{% else %}danger{% endif %}">
+                    <i class="fas fa-{% if cash_flow_health == 'good' %}check{% else %}exclamation{% endif %}-circle"></i>
+                    {{ cash_flow_health|title }}
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="content-card mt-4" data-aos="fade-up">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    AI Recommendations
+                </h3>
+            </div>
+            <div class="card-body-sm">
+                <div class="recommendations-list">
+                    {% if overdue_invoices_count > 0 %}
+                    <div class="recommendation-item danger">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Address Overdue Payments</h4>
+                            <p>You have {{ overdue_invoices_count }} overdue invoices totaling ₹{{ overdue_amount|floatformat:2 }}. Immediate follow-up recommended.</p>
+                            <a href="{% url 'send_reminders' %}" class="recommendation-action">
+                                Send Reminders <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if pending_invoices_count > 5 %}
+                    <div class="recommendation-item warning">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Optimize Payment Collection</h4>
+                            <p>{{ pending_invoices_count }} invoices awaiting payment. Consider implementing automated reminders.</p>
+                            <a href="{% url 'invoice_list' %}?status=pending" class="recommendation-action">
+                                View Pending <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if collection_rate > 85 %}
+                    <div class="recommendation-item success">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Excellent Collection Rate</h4>
+                            <p>Your collection rate of {{ collection_rate|floatformat:1 }}% is outstanding! Maintain this performance.</p>
+                        </div>
+                    </div>
+                    {% elif collection_rate < 70 %}
+                    <div class="recommendation-item info">
+                        <div class="recommendation-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="recommendation-content">
+                            <h4>Improve Collection Process</h4>
+                            <p>Collection rate of {{ collection_rate|floatformat:1 }}% needs attention. Review payment terms and follow-up procedures.</p>
+                            <a href="{% url 'send_reminders' %}" class="recommendation-action">
+                                Optimize Reminders <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trends Tab -->
+    <div class="tab-content" id="trends">
+        <!-- Performance Trends -->
+        <div class="content-card" data-aos="fade-up">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-trending-up me-2"></i>
+                    Performance Trends
+                </h3>
+            </div>
+            <div class="card-body-sm">
+                <div class="trends-grid">
+                    <div class="trend-item">
+                        <div class="trend-header">
+                            <span class="trend-title">Revenue Trend</span>
+                            <span class="trend-value {% if revenue_trend == 'up' %}success{% else %}danger{% endif %}">
+                                {{ revenue_change|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="trend-bar">
+                            <div class="trend-fill {% if revenue_trend == 'up' %}success{% else %}danger{% endif %}" 
+                                 style="width: {% if revenue_trend == 'up' %}70{% else %}30{% endif %}%">
+                                </div>
+                        </div>
+                        <div class="trend-footer">
+                            <span class="trend-label">
+                                {% if revenue_trend == 'up' %}
+                                Positive growth trend
+                                {% else %}
+                                Review revenue strategy
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-header">
+                            <span class="trend-title">Collection Efficiency</span>
+                            <span class="trend-value {% if collection_rate > 80 %}success{% elif collection_rate > 60 %}warning{% else %}danger{% endif %}">
+                                {{ collection_rate|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="trend-bar">
+                            <div class="trend-fill {% if collection_rate > 80 %}success{% elif collection_rate > 60 %}warning{% else %}danger{% endif %}" 
+                                 style="width: {{ collection_rate }}%"></div>
+                        </div>
+                        <div class="trend-footer">
+                            <span class="trend-label">
+                                {% if collection_rate > 80 %}
+                                Excellent collection rate
+                                {% elif collection_rate > 60 %}
+                                Good, can be improved
+                                {% else %}
+                                Needs immediate attention
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Stats Grid - FIXED ALIGNMENT */
+.stats-grid-three {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-square {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-square:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(100, 116, 139, 0.2);
+}
+
+.stat-trend.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.stat-trend.info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+.stat-trend.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+}
+
+.stat-trend.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+/* Analysis Grid */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.analysis-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.analysis-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.analysis-item.success {
+    border-left: 4px solid var(--accent-green);
+}
+
+.analysis-item.warning {
+    border-left: 4px solid var(--accent-orange);
+}
+
+.analysis-item.danger {
+    border-left: 4px solid var(--accent-red);
+}
+
+.analysis-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.analysis-item.success .analysis-icon {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.analysis-item.warning .analysis-icon {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+}
+
+.analysis-item.danger .analysis-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+.analysis-content {
+    flex: 1;
+}
+
+.analysis-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.analysis-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.analysis-amount {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.metric-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-blue);
+}
+
+.metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.metric-icon.primary {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.metric-icon.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.metric-icon.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.metric-icon.info {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--accent-purple);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Recommendations */
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recommendation-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.recommendation-item:hover {
+    transform: translateX(5px);
+    border-color: var(--accent-blue);
+}
+
+.recommendation-item.warning {
+    border-left: 4px solid var(--accent-orange);
+}
+
+.recommendation-item.info {
+    border-left: 4px solid var(--accent-blue);
+}
+
+.recommendation-item.success {
+    border-left: 4px solid var(--accent-green);
+}
+
+.recommendation-item.danger {
+    border-left: 4px solid var(--accent-red);
+}
+
+.recommendation-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.recommendation-item.warning .recommendation-icon {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+}
+
+.recommendation-item.info .recommendation-icon {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+.recommendation-item.success .recommendation-icon {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.recommendation-item.danger .recommendation-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+.recommendation-content {
+    flex: 1;
+}
+
+.recommendation-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.recommendation-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.recommendation-action {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.recommendation-action:hover {
+    color: var(--text-primary);
+}
+
+/* Trends */
+.trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.trend-item {
+    padding: 1.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+}
+
+.trend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.trend-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.trend-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.trend-value.success {
+    color: var(--accent-green);
+}
+
+.trend-value.warning {
+    color: var(--accent-orange);
+}
+
+.trend-value.danger {
+    color: var(--accent-red);
+}
+
+.trend-bar {
+    height: 8px;
+    background: var(--card-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.trend-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+.trend-fill.success {
+    background: var(--accent-green);
+}
+
+.trend-fill.warning {
+    background: var(--accent-orange);
+}
+
+.trend-fill.danger {
+    background: var(--accent-red);
+}
+
+.trend-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trend-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Utility Classes */
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .analysis-grid,
+    .metrics-grid,
+    .trends-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .recommendation-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .analysis-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .metric-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding content
+            this.classList.add('active');
+            document.getElementById(targetTab).classList.add('active');
+        });
+    });
+
+    // Initialize AOS animations
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    console.log('AI Analytics dashboard loaded successfully');
+});
+</script>
+{% endblock %}

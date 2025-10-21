@@ -1,0 +1,1008 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}Invoice Preview - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">Invoice Preview</h1>
+                    <span class="brand-subtitle">Review before finalizing</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Home">
+                <i class="fas fa-home"></i>
+                <span class="action-tooltip">Home</span>
+            </a>
+            <a href="{% url 'ai_dashboard' %}" class="nav-action" title="AI">
+                <i class="fas fa-robot"></i>
+                <span class="action-tooltip">AI</span>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Preview Header -->
+    <div class="preview-hero" data-aos="fade-up">
+        <div class="status-card premium success">
+            <div class="status-content">
+                <div class="status-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="status-text">
+                    <h2 class="status-title">Invoice Preview Ready</h2>
+                    <p class="status-subtitle">
+                        Review all details before finalizing the invoice. Make sure all information is correct.
+                    </p>
+                </div>
+                <div class="status-badge">
+                    <span class="badge-text">Preview</span>
+                    <div class="badge-subtext">Mode</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="content-card premium" data-aos="fade-up">
+        <div class="card-body-sm">
+            <div class="preview-actions">
+                <button class="btn btn-primary" onclick="printInvoice()">
+                    <i class="fas fa-print me-2"></i>Print Invoice
+                </button>
+                <button class="btn btn-success" onclick="finalizeInvoice()">
+                    <i class="fas fa-check me-2"></i>Finalize Invoice
+                </button>
+                <a href="{% url 'invoice_form' invoice.id %}" class="btn btn-outline">
+                    <i class="fas fa-edit me-2"></i>Edit Invoice
+                </a>
+                <a href="{% url 'invoice_list' %}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Preview -->
+    <div class="invoice-preview-container" data-aos="fade-up">
+        <div class="invoice-preview" id="invoicePreview">
+            <!-- Company Header -->
+            <div class="invoice-header">
+                <div class="company-info">
+                    <div class="company-logo-large">
+                        {% if company_logo %}
+                        <img src="{{ company_logo }}" alt="Company Logo" class="logo-img">
+                        {% else %}
+                        <div class="logo-placeholder">
+                            <span>FD</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="company-details">
+                        <h2 class="company-name">{{ company_name|default:"FolkDrive Solutions" }}</h2>
+                        <p class="company-address">
+                            {{ company_address|default:"123 Business Street, City, State 560001" }}
+                        </p>
+                        <p class="company-contact">
+                            GST: {{ company_gst|default:"29ABCDE1234F1Z5" }} | 
+                            Phone: {{ company_phone|default:"+91 9876543210" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="invoice-title">
+                    <h1>TAX INVOICE</h1>
+                    <div class="invoice-number">
+                        #{{ invoice.invoice_number }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Details -->
+            <div class="invoice-details-grid">
+                <div class="bill-to">
+                    <h4>Bill To:</h4>
+                    <div class="customer-details">
+                        <strong>{{ invoice.customer.company_name }}</strong>
+                        <p>{{ invoice.customer.address }}</p>
+                        <p>GST: {{ invoice.customer.gst_number }}</p>
+                        <p>Phone: {{ invoice.customer.phone_number }}</p>
+                        <p>Email: {{ invoice.customer.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="invoice-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Invoice Date:</span>
+                        <span class="meta-value">{{ invoice.invoice_date|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Due Date:</span>
+                        <span class="meta-value">{{ invoice.due_date|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Payment Terms:</span>
+                        <span class="meta-value">{{ invoice.payment_terms|default:"Net 30" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Status:</span>
+                        <span class="meta-value status-badge status-{{ invoice.status|lower }}">
+                            {{ invoice.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="line-items-section">
+                <table class="line-items-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
+                            <th>Tax</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.line_items.all %}
+                        <tr>
+                            <td>
+                                <div class="item-description">
+                                    <strong>{{ item.description }}</strong>
+                                    {% if item.details %}
+                                    <br><small>{{ item.details }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ item.rate|floatformat:2 }}</td>
+                            <td>₹{{ item.amount|floatformat:2 }}</td>
+                            <td>
+                                {% if item.tax_rate %}
+                                {{ item.tax_rate }}%
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td><strong>₹{{ item.total|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals -->
+            <div class="invoice-totals">
+                <div class="totals-grid">
+                    <div class="total-labels">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                        </div>
+                        {% if invoice.tax_amount %}
+                        <div class="total-row">
+                            <span>Tax ({{ invoice.tax_rate }}%):</span>
+                        </div>
+                        {% endif %}
+                        {% if invoice.discount_amount %}
+                        <div class="total-row">
+                            <span>Discount:</span>
+                        </div>
+                        {% endif %}
+                        <div class="total-row grand-total">
+                            <span>Total Amount:</span>
+                        </div>
+                        {% if invoice.amount_paid %}
+                        <div class="total-row">
+                            <span>Amount Paid:</span>
+                        </div>
+                        <div class="total-row balance-due">
+                            <span>Balance Due:</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="total-values">
+                        <div class="total-row">
+                            <span>₹{{ invoice.subtotal|floatformat:2 }}</span>
+                        </div>
+                        {% if invoice.tax_amount %}
+                        <div class="total-row">
+                            <span>₹{{ invoice.tax_amount|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                        {% if invoice.discount_amount %}
+                        <div class="total-row">
+                            <span>-₹{{ invoice.discount_amount|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="total-row grand-total">
+                            <span>₹{{ invoice.total_amount|floatformat:2 }}</span>
+                        </div>
+                        {% if invoice.amount_paid %}
+                        <div class="total-row">
+                            <span>₹{{ invoice.amount_paid|floatformat:2 }}</span>
+                        </div>
+                        <div class="total-row balance-due">
+                            <span>₹{{ invoice.balance_due|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes & Terms -->
+            {% if invoice.notes or invoice.terms %}
+            <div class="notes-section">
+                {% if invoice.notes %}
+                <div class="notes">
+                    <h4>Notes:</h4>
+                    <p>{{ invoice.notes }}</p>
+                </div>
+                {% endif %}
+                
+                {% if invoice.terms %}
+                <div class="terms">
+                    <h4>Terms & Conditions:</h4>
+                    <p>{{ invoice.terms }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Footer -->
+            <div class="invoice-footer">
+                <div class="signature-section">
+                    <div class="signature-line"></div>
+                    <p>Authorized Signature</p>
+                </div>
+                <div class="footer-text">
+                    <p>Thank you for your business!</p>
+                    <p class="footer-contact">
+                        For any queries, contact: {{ company_phone|default:"+91 9876543210" }} | 
+                        {{ company_email|default:"accounts@folkdrive.com" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-card premium" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-bolt me-2"></i>
+                Quick Actions
+            </h3>
+        </div>
+        <div class="card-body-sm">
+            <div class="quick-actions-grid">
+                <button class="quick-action-btn" onclick="sendToCustomer()">
+                    <div class="action-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="action-text">
+                        <span class="action-title">Send to Customer</span>
+                        <span class="action-desc">Email this invoice</span>
+                    </div>
+                </button>
+                
+                <button class="quick-action-btn" onclick="downloadPDF()">
+                    <div class="action-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="action-text">
+                        <span class="action-title">Download PDF</span>
+                        <span class="action-desc">Save as PDF file</span>
+                    </div>
+                </button>
+                
+                <button class="quick-action-btn" onclick="createPayment()">
+                    <div class="action-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="action-text">
+                        <span class="action-title">Record Payment</span>
+                        <span class="action-desc">Add payment entry</span>
+                    </div>
+                </button>
+                
+                <button class="quick-action-btn" onclick="duplicateInvoice()">
+                    <div class="action-icon">
+                        <i class="fas fa-copy"></i>
+                    </div>
+                    <div class="action-text">
+                        <span class="action-title">Duplicate</span>
+                        <span class="action-desc">Create copy</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Invoice Preview Specific Styles */
+.preview-hero {
+    margin-bottom: 2rem;
+}
+
+.status-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid;
+    border-radius: 20px;
+    padding: 2.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.status-card.success {
+    border-color: var(--accent-green);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+.status-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.status-icon {
+    font-size: 3.5rem;
+    flex-shrink: 0;
+    color: var(--accent-green);
+}
+
+.status-text {
+    flex: 1;
+}
+
+.status-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.status-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.badge-text {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    display: block;
+}
+
+.badge-subtext {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Preview Actions */
+.preview-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Invoice Preview Container */
+.invoice-preview-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.invoice-preview {
+    padding: 3rem;
+    color: #333;
+    background: white;
+}
+
+/* Invoice Header */
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.company-info {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.company-logo-large {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.logo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.company-details h2 {
+    margin: 0 0 0.5rem 0;
+    color: #1e293b;
+    font-size: 1.5rem;
+}
+
+.company-address,
+.company-contact {
+    margin: 0.25rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.invoice-title {
+    text-align: right;
+}
+
+.invoice-title h1 {
+    margin: 0 0 0.5rem 0;
+    color: #1e293b;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.invoice-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+/* Invoice Details Grid */
+.invoice-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bill-to h4,
+.invoice-meta h4 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.customer-details strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.customer-details p {
+    margin: 0.25rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.meta-item:last-child {
+    border-bottom: none;
+}
+
+.meta-label {
+    font-weight: 600;
+    color: #475569;
+}
+
+.meta-value {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Line Items Table */
+.line-items-section {
+    margin-bottom: 2rem;
+}
+
+.line-items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.line-items-table th {
+    background: #f8fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.line-items-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+.line-items-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.item-description strong {
+    color: #1e293b;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.item-description small {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+/* Invoice Totals */
+.invoice-totals {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.totals-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: end;
+    gap: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.total-row:last-child {
+    border-bottom: none;
+}
+
+.total-labels .total-row {
+    justify-content: flex-start;
+    min-width: 150px;
+}
+
+.total-values .total-row {
+    justify-content: flex-end;
+    min-width: 120px;
+    font-weight: 600;
+}
+
+.grand-total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    border-top: 2px solid #e2e8f0;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+.balance-due {
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+/* Notes Section */
+.notes-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.notes-section h4 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.notes-section p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.5;
+}
+
+/* Invoice Footer */
+.invoice-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.signature-section {
+    text-align: center;
+}
+
+.signature-line {
+    width: 200px;
+    height: 1px;
+    background: #cbd5e1;
+    margin-bottom: 0.5rem;
+}
+
+.signature-section p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.footer-text {
+    text-align: right;
+}
+
+.footer-text p {
+    margin: 0.25rem 0;
+    color: #64748b;
+}
+
+.footer-contact {
+    font-size: 0.8rem;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.action-text {
+    flex: 1;
+}
+
+.action-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.action-desc {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-paid {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-draft {
+    background: rgba(100, 116, 139, 0.15);
+    color: #64748b;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+/* Print Styles */
+@media print {
+    .top-nav,
+    .preview-hero,
+    .preview-actions,
+    .quick-actions-grid {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding: 0 !important;
+    }
+    
+    .invoice-preview-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+    
+    .invoice-preview {
+        padding: 0 !important;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .invoice-preview {
+        padding: 1.5rem;
+    }
+    
+    .invoice-header {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .invoice-details-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .totals-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        max-width: 100%;
+    }
+    
+    .invoice-footer {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .company-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .invoice-title {
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Invoice preview interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS animations
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    console.log('Invoice preview page loaded successfully');
+});
+
+// Print invoice functionality
+function printInvoice() {
+    const invoiceElement = document.getElementById('invoicePreview');
+    if (invoiceElement) {
+        printElement('invoicePreview');
+    }
+}
+
+// Finalize invoice
+function finalizeInvoice() {
+    if (confirm('Are you sure you want to finalize this invoice? This action cannot be undone.')) {
+        showLoading();
+        
+        // Simulate API call
+        setTimeout(() => {
+            hideLoading();
+            showNotification('Invoice finalized successfully!', 'success');
+            // Redirect to invoice detail page or refresh
+            window.location.href = "{% url 'invoice_detail' invoice.id %}";
+        }, 1500);
+    }
+}
+
+// Send to customer
+function sendToCustomer() {
+    showLoading();
+    
+    // Simulate email sending
+    setTimeout(() => {
+        hideLoading();
+        showNotification('Invoice sent to customer successfully!', 'success');
+    }, 1000);
+}
+
+// Download PDF
+function downloadPDF() {
+    showLoading();
+    
+    // Simulate PDF generation
+    setTimeout(() => {
+        hideLoading();
+        showNotification('PDF download started...', 'info');
+        
+        // Create a temporary link for download
+        const link = document.createElement('a');
+        link.href = '#'; // Replace with actual PDF URL
+        link.download = 'invoice_{{ invoice.invoice_number }}.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }, 2000);
+}
+
+// Create payment
+function createPayment() {
+    window.location.href = "{% url 'payment_form' %}?invoice={{ invoice.id }}";
+}
+
+// Duplicate invoice
+function duplicateInvoice() {
+    if (confirm('Create a duplicate of this invoice?')) {
+        showLoading();
+        
+        // Simulate duplication process
+        setTimeout(() => {
+            hideLoading();
+            showNotification('Invoice duplicated successfully!', 'success');
+            // Redirect to new invoice form with duplicated data
+            window.location.href = "{% url 'invoice_form' %}?duplicate={{ invoice.id }}";
+        }, 1000);
+    }
+}
+
+// Global print function
+function printElement(elementId) {
+    const element = document.getElementById(elementId);
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Invoice {{ invoice.invoice_number }}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        color: #333;
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    @media print {
+                        @page { margin: 0; }
+                        body { margin: 1.6cm; }
+                    }
+                    .no-print { display: none !important; }
+                    .invoice-preview { 
+                        max-width: 100%; 
+                        margin: 0 auto;
+                    }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 8px 12px; border: 1px solid #ddd; }
+                    th { background: #f5f5f5; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                ${element.innerHTML}
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Wait for content to load before printing
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+</script>
+{% endblock %}

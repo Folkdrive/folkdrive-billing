@@ -1,0 +1,792 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}{{ work_order.work_order_number }} - {{ work_order.project_title }} - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">{{ work_order.work_order_number }}</h1>
+                    <span class="brand-subtitle">{{ work_order.project_title }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'workorder_list' %}" class="nav-action" title="Back to Work Orders">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a href="{% url 'workorder_edit' work_order.pk %}" class="nav-action" title="Edit Work Order">
+                <i class="fas fa-edit"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <div class="row g-4">
+        <!-- Left Column - Work Order Information -->
+        <div class="col-lg-8">
+            <!-- Project Details -->
+            <div class="content-card" data-aos="fade-up">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Project Details
+                    </h3>
+                    <div class="card-actions">
+                        <a href="{% url 'workorder_edit' work_order.pk %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-edit me-2"></i>Edit
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body-sm">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-tasks me-2"></i>Project Title
+                            </label>
+                            <span class="detail-value">{{ work_order.project_title }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-status me-2"></i>Status
+                            </label>
+                            <span class="detail-value">
+                                {% if work_order.status == 'completed' %}
+                                <span class="status-badge status-success">
+                                    <i class="fas fa-check-circle me-1"></i>Completed
+                                </span>
+                                {% elif work_order.status == 'in_progress' %}
+                                <span class="status-badge status-warning">
+                                    <i class="fas fa-sync-alt me-1"></i>In Progress
+                                </span>
+                                {% elif work_order.status == 'confirmed' %}
+                                <span class="status-badge status-info">
+                                    <i class="fas fa-check me-1"></i>Confirmed
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-secondary">
+                                    <i class="fas fa-edit me-1"></i>Draft
+                                </span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-calendar-start me-2"></i>Start Date
+                            </label>
+                            <span class="detail-value">{{ work_order.start_date|date:"M d, Y"|default:"Not set" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-calendar-check me-2"></i>End Date
+                            </label>
+                            <span class="detail-value">{{ work_order.end_date|date:"M d, Y"|default:"Not set" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Description -->
+            <div class="content-card" data-aos="fade-up" data-aos-delay="50">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-align-left me-2"></i>
+                        Project Description
+                    </h3>
+                </div>
+                <div class="card-body-sm">
+                    <div class="description-content">
+                        {% if work_order.project_description %}
+                            {{ work_order.project_description|linebreaks }}
+                        {% else %}
+                            <div class="empty-state-small">
+                                <i class="fas fa-align-left"></i>
+                                <p>No description provided</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Details -->
+            <div class="content-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-calculator me-2"></i>
+                        Financial Details
+                    </h3>
+                </div>
+                <div class="card-body-sm">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-money-bill-wave me-2"></i>Base Amount
+                            </label>
+                            <span class="detail-value">₹{{ work_order.base_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-tag me-2"></i>Discount
+                            </label>
+                            <span class="detail-value">{{ work_order.discount }}% (₹{{ work_order.discount_amount|floatformat:2 }})</span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-percentage me-2"></i>GST
+                            </label>
+                            <span class="detail-value">{{ work_order.gst_percentage }}% (₹{{ work_order.gst_amount|floatformat:2 }})</span>
+                        </div>
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>Total Cost
+                            </label>
+                            <span class="detail-value highlight">₹{{ work_order.total_cost|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Customer & Actions -->
+        <div class="col-lg-4">
+            <!-- Work Order Summary -->
+            <div class="content-card" data-aos="fade-up">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Work Order Summary
+                    </h3>
+                </div>
+                <div class="card-body-sm">
+                    <div class="summary-stats">
+                        <div class="summary-item">
+                            <div class="summary-icon success">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-number">₹{{ work_order.total_cost|floatformat:2 }}</div>
+                                <div class="summary-label">Total Value</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-icon info">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-number">{{ work_order.get_status_display }}</div>
+                                <div class="summary-label">Status</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-icon warning">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-number">
+                                    {% if work_order.is_migrated %}Legacy{% else %}New{% endif %}
+                                </div>
+                                <div class="summary-label">Data Source</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="content-card" data-aos="fade-up" data-aos-delay="50">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h3>
+                </div>
+                <div class="card-body-sm">
+                    <div class="action-buttons-compact">
+                        {% if work_order.status in 'confirmed,completed' and not work_order.invoice %}
+                        <a href="{% url 'convert_to_invoice' work_order.pk %}" class="btn btn-primary btn-compact" title="Convert to Invoice">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Convert</span>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'workorder_edit' work_order.pk %}" class="btn btn-outline btn-compact" title="Edit Work Order">
+                            <i class="fas fa-edit"></i>
+                            <span>Edit</span>
+                        </a>
+                        <a href="{% url 'print_workorder' work_order.pk %}" class="btn btn-outline btn-compact" title="Print Work Order" target="_blank">
+                            <i class="fas fa-print"></i>
+                            <span>Print</span>
+                        </a>
+                        <a href="{% url 'workorder_list' %}" class="btn btn-outline btn-compact" title="Back to List">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Back</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="content-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header-sm">
+                    <h3 class="card-title-sm">
+                        <i class="fas fa-clock me-2"></i>
+                        Timeline
+                    </h3>
+                </div>
+                <div class="card-body-sm">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-icon success">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Created</div>
+                                <div class="timeline-date">{{ work_order.created_at|date:"M d, Y" }}</div>
+                                <div class="timeline-time">{{ work_order.created_at|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon info">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Last Updated</div>
+                                <div class="timeline-date">{{ work_order.updated_at|date:"M d, Y" }}</div>
+                                <div class="timeline-time">{{ work_order.updated_at|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon warning">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Created By</div>
+                                <div class="timeline-value">{{ work_order.created_by }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="content-card mt-4" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-building me-2"></i>
+                Customer Information
+            </h3>
+            <div class="card-actions">
+                <a href="{% url 'customer_detail' work_order.customer.pk %}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-external-link-alt me-2"></i>View Customer
+                </a>
+            </div>
+        </div>
+        <div class="card-body-sm">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-landmark me-2"></i>Company Name
+                    </label>
+                    <span class="detail-value">{{ work_order.customer.company_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-user-tie me-2"></i>Contact Person
+                    </label>
+                    <span class="detail-value">{{ work_order.customer.contact_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-envelope me-2"></i>Email
+                    </label>
+                    <span class="detail-value">{{ work_order.customer.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-mobile-alt me-2"></i>Mobile
+                    </label>
+                    <span class="detail-value">{{ work_order.customer.mobile_number }}</span>
+                </div>
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-id-card me-2"></i>GST Number
+                    </label>
+                    <span class="detail-value code">{{ work_order.customer.gst_number }}</span>
+                </div>
+                <div class="detail-item">
+                    <label class="detail-label">
+                        <i class="fas fa-code-branch me-2"></i>Branch Location
+                    </label>
+                    <span class="detail-value">{{ work_order.customer.branch_location }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Invoice -->
+    {% if work_order.invoice %}
+    <div class="content-card mt-4" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Related Invoice
+            </h3>
+        </div>
+        <div class="card-body-sm">
+            <div class="invoice-alert">
+                <div class="invoice-content">
+                    <div class="invoice-info">
+                        <div class="invoice-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="invoice-text">
+                            <h4 class="invoice-title">{{ work_order.invoice.invoice_number }}</h4>
+                            <p class="invoice-subtitle">Invoice created from this work order</p>
+                        </div>
+                    </div>
+                    <div class="invoice-actions">
+                        <a href="{% url 'invoice_detail' work_order.invoice.pk %}" class="btn btn-success">
+                            <i class="fas fa-eye me-2"></i>
+                            View Invoice
+                        </a>
+                        <a href="{% url 'print_invoice' work_order.invoice.pk %}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-print me-2"></i>
+                            Print Invoice
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Work Order Detail Specific Styles */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.detail-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.detail-value.highlight {
+    color: var(--accent-green);
+    font-size: 1.1rem;
+}
+
+.detail-value.code {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    display: inline-block;
+}
+
+/* Description Content */
+.description-content {
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state-small i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.status-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-orange);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.status-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-blue);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.status-secondary {
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--text-secondary);
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.summary-icon.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.summary-icon.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.summary-icon.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Compact Action Buttons */
+.action-buttons-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.btn-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 70px;
+}
+
+.btn-compact i {
+    font-size: 1.2rem;
+}
+
+.btn-compact span {
+    font-size: 0.75rem;
+}
+
+/* Timeline */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.timeline-icon.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.timeline-icon.info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.timeline-icon.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.timeline-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Invoice Alert */
+.invoice-alert {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--accent-green);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.invoice-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.invoice-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.invoice-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--accent-green);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.invoice-text {
+    flex: 1;
+}
+
+.invoice-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    margin: 0 0 0.5rem 0;
+}
+
+.invoice-subtitle {
+    color: var(--accent-green);
+    margin: 0;
+    opacity: 0.8;
+}
+
+.invoice-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Badge */
+.badge {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    color: white;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons-compact {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .invoice-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .invoice-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .invoice-actions {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Work order detail interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced table row interactions
+    const tableRows = document.querySelectorAll('.table-row');
+    tableRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (!e.target.closest('.action-buttons')) {
+                const viewLink = this.querySelector('a[href*="workorder_detail"]');
+                if (viewLink) {
+                    viewLink.click();
+                }
+            }
+        });
+    });
+
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    console.log('Work order detail page loaded successfully');
+});
+</script>
+{% endblock %}

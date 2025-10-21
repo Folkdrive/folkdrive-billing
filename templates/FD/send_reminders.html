@@ -1,0 +1,517 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}Payment Reminders - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">Payment Reminders</h1>
+                    <span class="brand-subtitle">Automated payment collection system</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'invoice_list' %}" class="nav-action" title="Invoices">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Stats Section - Fixed Alignment -->
+    <div class="stats-section" data-aos="fade-up">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-envelope me-2"></i>
+                Reminders Overview
+            </h3>
+        </div>
+        <div class="stats-grid-three">
+            <div class="stat-square">
+                <div class="stat-label">Pending Invoices</div>
+                <div class="stat-number">{{ overdue_invoices.count }}</div>
+                <div class="stat-breakdown">
+                    <span class="stat-new">{{ overdue_invoices.count }} pending</span>
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">Emails Sent</div>
+                <div class="stat-number">{{ sent_emails_count }}</div>
+                <div class="stat-trend success">
+                    <i class="fas fa-paper-plane"></i>
+                    Total Sent
+                </div>
+            </div>
+            <div class="stat-square">
+                <div class="stat-label">Scheduled</div>
+                <div class="stat-number">{{ scheduled_emails|length }}</div>
+                <div class="stat-trend info">
+                    <i class="fas fa-clock"></i>
+                    Upcoming
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Configuration -->
+    <div class="content-card" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-cogs me-2"></i>
+                Email Configuration
+            </h3>
+        </div>
+        <div class="card-body-sm">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_config">
+                
+                <div class="form-grid-two">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-calendar-day me-2"></i>Days After Invoice (First Reminder)
+                        </label>
+                        <input type="number" name="days_after_invoice" 
+                               value="{{ email_config.days_after_invoice|default:7 }}"
+                               class="form-control" min="1" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-sync-alt me-2"></i>Reminder Frequency (Days)
+                        </label>
+                        <input type="number" name="reminder_frequency" 
+                               value="{{ email_config.reminder_frequency|default:3 }}"
+                               class="form-control" min="1" max="14">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-bell me-2"></i>Maximum Reminders
+                        </label>
+                        <input type="number" name="max_reminders" 
+                               value="{{ email_config.max_reminders|default:5 }}"
+                               class="form-control" min="1" max="10">
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="is_active" id="is_active" 
+                                   {% if email_config.is_active %}checked{% endif %}>
+                            <label for="is_active" class="form-label">
+                                Enable Automatic Reminders
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-heading me-2"></i>Email Subject
+                    </label>
+                    <input type="text" name="email_subject" 
+                           value="{{ email_config.email_subject|default:'Payment Reminder: Invoice {invoice_number}' }}"
+                           class="form-control"
+                           placeholder="Payment Reminder: Invoice {invoice_number}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="fas fa-align-left me-2"></i>Email Template
+                    </label>
+                    <textarea name="email_template" rows="10" 
+                              class="form-control"
+                              placeholder="Enter email template...">{{ email_config.email_template|default:'' }}</textarea>
+                    <div class="form-help">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Available variables: {customer_name}, {invoice_number}, {total_amount}, {balance_due}, {project_title}, {due_date}, {reminder_number}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                    </button>
+                    <button type="submit" name="action" value="send_test" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-2"></i>Send Test Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Reminders -->
+    <div class="content-card" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-bell me-2"></i>
+                Send Reminders Now
+            </h3>
+        </div>
+        <div class="card-body-sm">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="send_reminders">
+                <div class="action-content">
+                    <h4>Send Immediate Reminders</h4>
+                    <p>Send payment reminders to all eligible invoices immediately</p>
+                    <div class="action-info">
+                        <span class="badge badge-warning">{{ overdue_invoices.count }} invoices eligible</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-warning btn-lg">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Send Payment Reminders
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scheduled Emails -->
+    {% if scheduled_emails %}
+    <div class="content-card" data-aos="fade-up">
+        <div class="card-header-sm">
+            <h3 class="card-title-sm">
+                <i class="fas fa-clock me-2"></i>
+                Scheduled Reminders
+            </h3>
+        </div>
+        <div class="card-body-sm">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Next Reminder</th>
+                            <th>Reminders Sent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in scheduled_emails %}
+                        <tr class="table-row">
+                            <td>
+                                <div class="invoice-info">
+                                    <div class="invoice-number">{{ item.invoice.invoice_number }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="customer-info">
+                                    <div class="customer-name">{{ item.invoice.customer.company_name }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="date-info">{{ item.next_reminder }}</div>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ item.reminder_count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+            <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Stats Section - Using exact same styles from dashboard */
+.stats-section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.stats-grid-three {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.stat-square {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-square:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.stat-breakdown {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+}
+
+.stat-new {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(100, 116, 139, 0.2);
+}
+
+.stat-trend.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+}
+
+.stat-trend.info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+/* Email Reminders Specific Styles */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.action-content {
+    margin-bottom: 1.5rem;
+}
+
+.action-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.action-content p {
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.action-info {
+    margin-top: 0.5rem;
+}
+
+.messages-container {
+    margin-top: 1.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--accent-green);
+    color: var(--accent-green);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--accent-red);
+    color: var(--accent-red);
+}
+
+/* Form Styles */
+.form-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: var(--accent-red);
+    margin-left: 0.25rem;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--dark-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.875rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Badge Styles */
+.badge {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+    color: white;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, var(--accent-orange) 0%, #f59e0b 100%);
+}
+
+.badge-info {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid-three {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid-two {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Email reminders functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50
+    });
+
+    // Add confirmation for sending reminders
+    const sendForm = document.querySelector('form[action="send_reminders"]');
+    if (sendForm) {
+        sendForm.addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to send payment reminders to all eligible invoices?')) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    console.log('Payment reminders page loaded successfully');
+});
+</script>
+{% endblock %}

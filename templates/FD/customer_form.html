@@ -1,0 +1,529 @@
+{% extends 'FD/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Customer - Folkdrive Billing{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/logo.png' %}" alt="Folkdrive Logo" class="company-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback">
+                        <span>FD</span>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">{% if form.instance.pk %}Edit Customer{% else %}Create Customer{% endif %}</h1>
+                    <span class="brand-subtitle">{% if form.instance.pk %}Update customer details{% else %}Add new customer to database{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="quick-actions-nav">
+            <a href="{% url 'dashboard' %}" class="nav-action" title="Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="{% url 'customer_list' %}" class="nav-action" title="Back to Customers">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="nav-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username|default:"Admin" }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid main-content">
+    <!-- Customer Form -->
+    <div class="form-container" data-aos="fade-up">
+        <div class="content-card premium-form">
+            <div class="card-header-sm">
+                <h3 class="card-title-sm">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Customer Information
+                </h3>
+                <div class="card-actions">
+                    <a href="{% url 'customer_list' %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body-sm">
+                <form method="post" class="customer-form">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" data-aos="fade-up">
+                        {% for error in form.non_field_errors %}
+                        <div class="alert-message">
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Company Details Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-building me-2"></i>
+                                Company Details
+                            </h4>
+                            <div class="section-indicator success">
+                                <i class="fas fa-check-circle"></i>
+                                Required
+                            </div>
+                        </div>
+                        <div class="form-grid-two">
+                            <div class="form-group {% if form.company_name.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.company_name.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-landmark me-2"></i>Company Name
+                                </label>
+                                {{ form.company_name }}
+                                {% if form.company_name.errors %}
+                                <div class="error-message">
+                                    {% for error in form.company_name.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.gst_number.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.gst_number.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-id-card me-2"></i>GST Number
+                                </label>
+                                {{ form.gst_number }}
+                                {% if form.gst_number.errors %}
+                                <div class="error-message">
+                                    {% for error in form.gst_number.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-help">
+                                    <i class="fas fa-info-circle me-1"></i>Format: 00AAAAA0000A0Z0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-user me-2"></i>
+                                Contact Information
+                            </h4>
+                            <div class="section-indicator info">
+                                <i class="fas fa-user-check"></i>
+                                Primary Contact
+                            </div>
+                        </div>
+                        <div class="form-grid-two">
+                            <div class="form-group {% if form.contact_name.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                                <label for="{{ form.contact_name.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-user-tie me-2"></i>Contact Person
+                                </label>
+                                {{ form.contact_name }}
+                                {% if form.contact_name.errors %}
+                                <div class="error-message">
+                                    {% for error in form.contact_name.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group {% if form.mobile_number.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                                <label for="{{ form.mobile_number.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-mobile-alt me-2"></i>Mobile Number
+                                </label>
+                                {{ form.mobile_number }}
+                                {% if form.mobile_number.errors %}
+                                <div class="error-message">
+                                    {% for error in form.mobile_number.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group {% if form.email.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="150">
+                            <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="error-message">
+                                {% for error in form.email.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Address & Location Section -->
+                    <div class="form-section" data-aos="fade-up">
+                        <div class="section-header">
+                            <h4 class="section-title">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Address & Location
+                            </h4>
+                            <div class="section-indicator warning">
+                                <i class="fas fa-location-arrow"></i>
+                                Business Location
+                            </div>
+                        </div>
+                        <div class="form-group {% if form.address.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="50">
+                            <label for="{{ form.address.id_for_label }}" class="form-label required">
+                                <i class="fas fa-map me-2"></i>Full Address
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="error-message">
+                                {% for error in form.address.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group {% if form.branch_location.errors %}has-error{% endif %}" data-aos="fade-up" data-aos-delay="100">
+                            <label for="{{ form.branch_location.id_for_label }}" class="form-label required">
+                                <i class="fas fa-code-branch me-2"></i>Branch Location
+                            </label>
+                                {{ form.branch_location }}
+                                {% if form.branch_location.errors %}
+                                <div class="error-message">
+                                    {% for error in form.branch_location.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions" data-aos="fade-up">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>
+                                {% if form.instance.pk %}Update Customer{% else %}Create Customer{% endif %}
+                            </button>
+                            <a href="{% url 'customer_list' %}" class="btn btn-outline btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* Premium Form Styles */
+    .form-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .premium-form {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .premium-form:hover {
+        border-color: var(--accent-blue);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    .customer-form {
+        padding: 0.5rem;
+    }
+
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--card-border);
+        position: relative;
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 1rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+    }
+
+    .section-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .section-indicator.success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent-green);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .section-indicator.info {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--accent-blue);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .section-indicator.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-orange);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .form-grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: var(--accent-red);
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        width: 100%;
+        background: var(--dark-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .form-control.has-error {
+        border-color: var(--accent-red);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+
+    .form-help {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-style: italic;
+    }
+
+    .error-message {
+        color: var(--accent-red);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .alert {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--accent-red);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--accent-red);
+    }
+
+    .alert-message {
+        color: var(--accent-red);
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--card-border);
+    }
+
+    .btn-lg {
+        padding: 1rem 2.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--card-border);
+        color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-grid-two {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-lg {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    </style>
+
+    <script>
+    // Enhanced form interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.customer-form');
+        const gstInput = document.getElementById('{{ form.gst_number.id_for_label }}');
+        const mobileInput = document.getElementById('{{ form.mobile_number.id_for_label }}');
+
+        // GST number validation
+        if (gstInput) {
+            gstInput.addEventListener('blur', function() {
+                const gstNumber = this.value.trim();
+                if (gstNumber && gstNumber.length !== 15) {
+                    this.classList.add('has-error');
+                } else {
+                    this.classList.remove('has-error');
+                }
+            });
+        }
+
+        // Mobile number validation
+        if (mobileInput) {
+            mobileInput.addEventListener('blur', function() {
+                const mobileNumber = this.value.trim();
+                const mobileRegex = /^[6-9]\d{9}$/;
+                
+                if (mobileNumber && !mobileRegex.test(mobileNumber)) {
+                    this.classList.add('has-error');
+                } else {
+                    this.classList.remove('has-error');
+                }
+            });
+        }
+
+        // Auto-format GST number to uppercase
+        if (gstInput) {
+            gstInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        // Enhanced focus effects
+        const formControls = form.querySelectorAll('.form-control');
+        formControls.forEach(control => {
+            control.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            control.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 50
+        });
+
+        console.log('Customer form loaded successfully');
+    });
+    </script>
+{% endblock %}

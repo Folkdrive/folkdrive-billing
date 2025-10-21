@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Invoice - FolkDrive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Delete Invoice</h2>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete "{{ object.invoice_number }}"? This action cannot be undone.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex space-x-3">
+                <a href="{% url 'invoice_list' %}" class="flex-1 bg-gray-500 text-white text-center py-2 rounded-lg hover:bg-gray-600 transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" class="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition duration-200">
+                    Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
