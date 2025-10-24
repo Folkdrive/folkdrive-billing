@@ -42,9 +42,9 @@ WSGI_APPLICATION = "FDbilling.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Folkdrive$folkdrive',  # ⚠️ CORRECTED: PythonAnywhere adds $username
+        'NAME': 'Folkdrive$default',  # ⚠️ CORRECTED: PythonAnywhere adds $username
         'USER': 'Folkdrive',            # ✅ CORRECT
-        'PASSWORD': 'Folkdrive@12',     # ✅ CORRECT (but keep this safe!)
+        'PASSWORD': 'Sales@123',     # ✅ CORRECT (but keep this safe!)
         'HOST': 'Folkdrive.mysql.pythonanywhere-services.com',  # ✅ CORRECT
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
