@@ -1,21 +1,20 @@
 """
-Django settings for FDbilling project.
+Django settings for FDbilling project - LOCAL VERSION
 """
 
 import os
 from pathlib import Path
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-development-key-change-in-production')
+SECRET_KEY = 'django-insecure-your-local-development-secret-key-here-12345'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = True  # Changed to True for local development
 
-ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']  # Removed .onrender.com
 
 # Application definition
 INSTALLED_APPS = [
@@ -30,7 +29,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Keep for static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -52,6 +51,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                ## "FD.context_processors.company_settings",  # Added for company info
             ],
         },
     },
@@ -59,12 +59,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "FDbilling.wsgi.application"
 
-# Database
+# Database - SIMPLE SQLITE FOR LOCAL USE
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Legacy MySQL Database Configuration (Optional - for data migration)
+LEGACY_DATABASE_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'root',
+    'database': 'folkdrive',
+    'charset': 'utf8'
 }
 
 # Password validation
@@ -104,10 +113,70 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Email backend
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Company settings
+# Company settings - DEFAULTS FOR LOCAL DEVELOPMENT
 COMPANY_LOGO_URL = '/static/images/logo.png'
-WO_NUMBER_PREFIX = 'WO'
+WO_NUMBER_PREFIX = 'FDWO'
 INVOICE_NUMBER_PREFIX = 'INV'
 
-# Whitenoise for static files
+# Whitenoise for static files (keep for local development)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+
+# Security settings for local development (less restrictive)
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Logging configuration for local development
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'FD': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+# Custom settings for your application
+FOLKDRIVE_SETTINGS = {
+    'COMPANY_NAME': 'FolkDrive Solutions',
+    'SUPPORT_EMAIL': 'support@folkdrive.com',
+    'SUPPORT_PHONE': '+91-9876543210',
+    'CURRENCY': '₹',
+    'DEFAULT_GST_RATE': 18.0,
+    'ENABLE_LEGACY_MIGRATION': True,
+}
+
+# Auto-create required directories on startup
+REQUIRED_DIRS = [
+    STATIC_ROOT,
+    MEDIA_ROOT,
+    BASE_DIR / 'logs',
+]
+
+for directory in REQUIRED_DIRS:
+    directory.mkdir(parents=True, exist_ok=True)
